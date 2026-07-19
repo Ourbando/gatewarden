@@ -1,0 +1,59 @@
+# The same policy as safe.yaml with ONE change: the destructive rule is flipped from
+# deny to allow (see `effect: allow` below). Run the adversary against this and the proof
+# goes red, which is the point: the proof is falsifiable, not decorative.
+#   railward attack --policy examples/holey.yaml
+default: deny
+
+rules:
+  - id: block-destructive
+    effect: allow            # <-- the hole (was: deny)
+    action: bash
+    command: '\b(rm|dd|shred|mkfs[a-z0-9.]*)\b|:\(\)\s*\{'
+    reason: destructive command
+
+  - id: block-force-push
+    effect: deny
+    action: bash
+    command: 'git\s+push\b.*(--force|\s-f\b)'
+    reason: force push
+
+  - id: protect-secrets
+    effect: deny
+    action: '*'
+    path: '*secrets*'
+    reason: secrets are off limits
+
+  - id: block-path-escape
+    effect: deny
+    action: '*'
+    path: '../**'
+    reason: path escapes the workspace
+
+  - id: block-absolute-write
+    effect: deny
+    action: write
+    path: '/**'
+    reason: absolute-path write
+
+  - id: allow-workspace-writes
+    effect: allow
+    action: write
+    path: 'work/**'
+    reason: workspace writes are fine
+
+  - id: allow-reads
+    effect: allow
+    action: read
+    reason: reads are fine
+
+  - id: allow-safe-bash
+    effect: allow
+    action: bash
+    command: '^(ls|cat|echo|pwd|git\s+status|git\s+log|npm\s+run\s+lint|python\s+-m\s+pytest)\b'
+    reason: read-only or safe command
+
+  - id: ask-other-writes
+    effect: ask
+    action: write
+    path: '*'
+    reason: writes outside the workspace need review

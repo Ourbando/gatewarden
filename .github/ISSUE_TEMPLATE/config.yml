@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security model and known limits
+    url: https://github.com/Ourbando/railward/blob/main/SECURITY.md
+    about: What the gate does and does not defend. Read this before reporting.

@@ -1,0 +1,93 @@
+# A production-shaped policy for a coding agent working inside a repository. It permits an
+# everyday development workflow and refuses the dangerous classes outright; anything it does not
+# recognize is denied (fail-closed). Deny rules are ordered before allow rules, so no broad allow
+# can permit something a deny meant to stop; run `railward lint --policy examples/strict.yaml` to
+# confirm no deny rule is dead. Adjust the allow-list and the secret paths for your environment.
+default: deny
+
+rules:
+  # --- Dangerous classes, refused outright (kept first so they always win) ---
+  - id: deny-destructive
+    effect: deny
+    action: bash
+    command: '\b(rm|dd|shred|mkfs[a-z0-9.]*|fdisk|parted)\b|:\(\)\s*\{'
+    reason: destructive command
+
+  - id: deny-privilege
+    effect: deny
+    action: bash
+    command: '\b(sudo|doas|su|chmod|chown|chgrp|kill|killall|pkill|mount|umount)\b'
+    reason: privilege escalation or system-state change
+
+  - id: deny-network
+    effect: deny
+    action: bash
+    command: '\b(curl|wget|nc|ncat|netcat|telnet|ssh|scp|sftp|ftp|rsync)\b|/dev/tcp/'
+    reason: network egress or remote shell
+
+  - id: deny-persistence
+    effect: deny
+    action: bash
+    command: '\b(crontab|at|launchctl|systemctl|service)\b'
+    reason: persistence or service control
+
+  - id: deny-force-push
+    effect: deny
+    action: bash
+    command: 'git\s+push\b.*(--force|\s-f\b)'
+    reason: force push
+
+  - id: deny-secrets
+    effect: deny
+    action: '*'
+    path: '*secret*'
+    reason: secret material is off limits
+
+  - id: deny-dotenv
+    effect: deny
+    action: '*'
+    path: '*.env*'
+    reason: environment secrets are off limits
+
+  - id: deny-key-material
+    effect: deny
+    action: '*'
+    path: '*.ssh*'
+    reason: key material is off limits
+
+  - id: deny-path-escape
+    effect: deny
+    action: '*'
+    path: '../**'
+    reason: path escapes the workspace
+
+  - id: deny-absolute-write
+    effect: deny
+    action: write
+    path: '/**'
+    reason: absolute-path write
+
+  # --- Everyday workflow, permitted (relative paths only; absolutes fall through) ---
+  - id: allow-workspace-reads
+    effect: allow
+    action: read
+    path: '[!/]**'
+    reason: reading project files is fine
+
+  - id: allow-workspace-writes
+    effect: allow
+    action: write
+    path: '[!/]**'
+    reason: writing project files is fine
+
+  - id: allow-dev-commands
+    effect: allow
+    action: bash
+    command: '^(ls|cat|head|tail|pwd|echo|grep|rg|find|wc|diff|git\s+(status|log|diff|show|add|commit|checkout|switch|branch|stash|fetch|pull)|npm\s+(run|ci|install|test)|yarn|pnpm|make|python3?|pytest|node|tsc|go\s+(build|test|run|vet)|cargo\s+(build|test|run|check))\b'
+    reason: recognized development command
+
+  # --- Everything else surfaces to a human ---
+  - id: ask-other-writes
+    effect: ask
+    action: write
+    reason: an out-of-scope write needs review

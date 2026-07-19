@@ -1,0 +1,14 @@
+# Copy this into .github/workflows/gate.yml in your repo to gate every push and PR against your
+# policy. The build fails if any attack in the bundled adversary leaks through your policy, and a
+# signed proof plus a summary line are attached to the run.
+name: gate
+on: [push, pull_request]
+
+jobs:
+  railward:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Ourbando/railward@v0.2.0
+        with:
+          policy: policy/agent.yaml   # <- point this at your policy

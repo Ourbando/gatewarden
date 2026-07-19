@@ -1,0 +1,59 @@
+# Example policy. Rules are evaluated top to bottom, first match wins.
+# Anything that matches no rule hits the default, which is fail-closed.
+# This is a toy: it forbids a handful of obviously dangerous things and allows a small
+# safe set. Write your own policy for real use.
+default: deny
+
+rules:
+  - id: block-destructive
+    effect: deny
+    action: bash
+    command: '\b(rm|dd|shred|mkfs[a-z0-9.]*)\b|:\(\)\s*\{'
+    reason: destructive command
+
+  - id: block-force-push
+    effect: deny
+    action: bash
+    command: 'git\s+push\b.*(--force|\s-f\b)'
+    reason: force push
+
+  - id: protect-secrets
+    effect: deny
+    action: '*'
+    path: '*secrets*'
+    reason: secrets are off limits
+
+  - id: block-path-escape
+    effect: deny
+    action: '*'
+    path: '../**'
+    reason: path escapes the workspace
+
+  - id: block-absolute-write
+    effect: deny
+    action: write
+    path: '/**'
+    reason: absolute-path write
+
+  - id: allow-workspace-writes
+    effect: allow
+    action: write
+    path: 'work/**'
+    reason: workspace writes are fine
+
+  - id: allow-reads
+    effect: allow
+    action: read
+    reason: reads are fine
+
+  - id: allow-safe-bash
+    effect: allow
+    action: bash
+    command: '^(ls|cat|echo|pwd|git\s+status|git\s+log|npm\s+run\s+lint|python\s+-m\s+pytest)\b'
+    reason: read-only or safe command
+
+  - id: ask-other-writes
+    effect: ask
+    action: write
+    path: '*'
+    reason: writes outside the workspace need review

@@ -1,0 +1,234 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="175" viewBox="0 0 200 46" shape-rendering="crispEdges" role="img" aria-labelledby="gcT gcD">
+  <title id="gcT">The gate, checked</title>
+  <desc id="gcD">An untrusted AI agent console emits proposal pulses up a feeder pipe into the main line and through the deterministic gate. Allowed pulses run on through the green chamber while a streak seals the signed, tamper-evident log in the vault. Blocked pulses are refused, dropping into the red drain.</desc>
+  <style>
+    .pA { animation: pa 18s linear infinite; }
+    @keyframes pa {
+      0%   { transform: translate(-34px, 9px); opacity: 1; }
+      4%   { transform: translate(-34px, 0); opacity: 1; }
+      18.667% { transform: translate(40px, 0); opacity: 1; }
+      22%  { transform: translate(44px, 0); opacity: 1; }
+      38.667% { transform: translate(148px, 0); opacity: 1; }
+      39%, 100% { transform: translate(148px, 0); opacity: 0; }
+    }
+    .pB { animation: pb 18s linear infinite; }
+    @keyframes pb {
+      0%, 30% { transform: translate(-34px, 9px); opacity: 0; }
+      30.1% { transform: translate(-34px, 9px); opacity: 1; }
+      34%  { transform: translate(-34px, 0); opacity: 1; }
+      48.667% { transform: translate(40px, 0); opacity: 1; }
+      52%  { transform: translate(44px, 0); opacity: 1; }
+      68.667% { transform: translate(148px, 0); opacity: 1; }
+      69%, 100% { transform: translate(148px, 0); opacity: 0; }
+    }
+    .pC { animation: pc 18s linear infinite; }
+    @keyframes pc {
+      0%, 60% { transform: translate(-34px, 9px); opacity: 0; }
+      60.1% { transform: translate(-34px, 9px); opacity: 1; }
+      64%  { transform: translate(-34px, 0); opacity: 1; }
+      78.667% { transform: translate(40px, 0); opacity: 1; }
+      82%  { transform: translate(40px, 0); opacity: 1; }
+      82.5%, 100% { transform: translate(40px, 0); opacity: 0; }
+    }
+    .ember { animation: em 18s linear infinite; }
+    @keyframes em {
+      0%, 82% { transform: translate(0, 0); opacity: 0; }
+      82.5% { transform: translate(0, 0); opacity: 1; }
+      88%  { transform: translate(0, 11px); opacity: 1; }
+      90.5%, 100% { transform: translate(0, 13px); opacity: 0; }
+    }
+    .gGreen { animation: gg 18s linear infinite; }
+    @keyframes gg {
+      0%, 18% { opacity: 0; } 19.333%, 23.333% { opacity: 1; } 26.667%, 48% { opacity: 0; }
+      49.333%, 53.333% { opacity: 1; } 56.667%, 100% { opacity: 0; }
+    }
+    .gRed { animation: gr 18s linear infinite; }
+    @keyframes gr {
+      0%, 78% { opacity: 0; } 79.333%, 83.333% { opacity: 1; } 86%, 100% { opacity: 0; }
+    }
+    .streak { animation: st 18s linear infinite; }
+    @keyframes st {
+      0%, 21.333% { transform: translate(0, 0); opacity: 0; }
+      22.667% { transform: translate(0, 0); opacity: 1; }
+      26.667% { transform: translate(0, -5px); opacity: 1; }
+      28% { transform: translate(0, -5px); opacity: 0; }
+      51.333% { transform: translate(0, 0); opacity: 0; }
+      52.667% { transform: translate(0, 0); opacity: 1; }
+      56.667% { transform: translate(0, -5px); opacity: 1; }
+      58%, 100% { transform: translate(0, -5px); opacity: 0; }
+    }
+    .sA1 { animation: sa1 18s linear infinite; }
+    @keyframes sa1 { 0%, 26% { opacity: 0; } 26.667%, 28.667% { opacity: 1; } 30.667%, 100% { opacity: 0; } }
+    .sA2 { animation: sa2 18s linear infinite; }
+    @keyframes sa2 { 0%, 28.667% { opacity: 0; } 30.667%, 100% { opacity: 0.9; } }
+    .sB1 { animation: sb1 18s linear infinite; }
+    @keyframes sb1 { 0%, 56% { opacity: 0; } 56.667%, 58.667% { opacity: 1; } 60.667%, 100% { opacity: 0; } }
+    .sB2 { animation: sb2 18s linear infinite; }
+    @keyframes sb2 { 0%, 58.667% { opacity: 0; } 60.667%, 100% { opacity: 0.9; } }
+    .sC1 { animation: sc1 18s linear infinite; }
+    @keyframes sc1 { 0%, 88% { opacity: 0; } 88.5%, 91% { opacity: 1; } 93%, 100% { opacity: 0; } }
+    .sC2 { animation: sc2 18s linear infinite; }
+    @keyframes sc2 { 0%, 91% { opacity: 0; } 93%, 100% { opacity: 0.9; } }
+    .chamber { animation: ch 18s linear infinite; }
+    @keyframes ch {
+      0%, 23% { opacity: 0; } 24.667%, 33.333% { opacity: 1; } 38.667%, 53% { opacity: 0; }
+      54.667%, 63.333% { opacity: 1; } 68.667%, 100% { opacity: 0; }
+    }
+    .riseGlow { animation: rg 18s linear infinite; }
+    @keyframes rg {
+      0%, 3.7% { opacity: 1; } 5%, 29.4% { opacity: 0; } 30%, 33.7% { opacity: 1; }
+      35%, 59.4% { opacity: 0; } 60%, 63.7% { opacity: 1; } 65%, 100% { opacity: 0; }
+    }
+    .lamp { animation: lp 18s linear infinite; }
+    @keyframes lp {
+      0%, 26% { opacity: 0; } 26.667%, 29.7% { opacity: 1; } 30.4%, 56% { opacity: 0; }
+      56.667%, 59.7% { opacity: 1; } 60.4%, 96% { opacity: 0; } 96.667%, 100% { opacity: 1; }
+    }
+    .bitA { animation: ba 3s linear infinite; }
+    @keyframes ba { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+    .bitB { animation: bb 4.5s linear infinite; animation-delay: -2s; }
+    @keyframes bb { 0%, 49% { opacity: 0; } 50%, 100% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .pA, .pB, .pC, .ember, .streak { display: none; } }
+  </style>
+  <defs>
+    <filter id="bloom" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="1.4"/></filter>
+  </defs>
+  <!-- main pipe, extended across the full strip -->
+  <rect x="0" y="20" width="52" height="1" fill="#96a0b4"/>
+  <rect x="0" y="21" width="52" height="2" fill="#111d3a"/>
+  <rect x="0" y="23" width="52" height="1" fill="#2c3240"/>
+  <rect x="148" y="20" width="52" height="1" fill="#96a0b4"/>
+  <rect x="148" y="21" width="52" height="2" fill="#111d3a"/>
+  <rect x="148" y="23" width="52" height="1" fill="#2c3240"/>
+  <!-- agent console, riser and junction collars -->
+  <rect x="20" y="24" width="1" height="4" fill="#96a0b4"/>
+  <rect x="21" y="24" width="2" height="4" fill="#111d3a"/>
+  <rect x="23" y="24" width="1" height="4" fill="#2c3240"/>
+  <g class="riseGlow"><rect x="20" y="24" width="4" height="4" fill="#a9edbf" fill-opacity="0.5"/></g>
+  <rect x="19" y="23" width="6" height="2" fill="#565e70"/>
+  <rect x="19" y="27" width="6" height="1" fill="#565e70"/>
+  <rect x="14" y="28" width="16" height="10" fill="#565e70"/>
+  <rect x="15" y="29" width="14" height="8" fill="#2c3240"/>
+  <rect x="17" y="30" width="7" height="4" fill="#111d3a"/>
+  <g class="bitA"><rect x="18" y="31" width="1" height="1" fill="#79d595"/><rect x="21" y="32" width="1" height="1" fill="#a9edbf"/></g>
+  <g class="bitB"><rect x="20" y="31" width="1" height="1" fill="#a9edbf"/><rect x="19" y="32" width="1" height="1" fill="#79d595"/></g>
+  <rect x="26" y="30" width="1" height="1" fill="#327a42"/>
+  <g class="lamp"><rect x="26" y="30" width="1" height="1" fill="#79d595"/></g>
+  <rect x="17" y="35" width="10" height="1" fill="#111d3a"/>
+  <rect x="15" y="38" width="3" height="1" fill="#565e70"/>
+  <rect x="26" y="38" width="3" height="1" fill="#565e70"/>
+  <!-- the original scene, untouched, on the bigger stage -->
+  <g transform="translate(52,9)">
+    <rect x="37" y="0" width="15" height="6" fill="#565e70"/>
+    <rect x="38" y="1" width="13" height="4" fill="#2c3240"/>
+    <rect x="40" y="2" width="9" height="2" fill="#1a4228"/>
+    <g class="sA1"><rect x="41" y="2" width="2" height="2" fill="#a9edbf"/></g>
+    <g class="sA2"><rect x="41" y="2" width="2" height="2" fill="#79d595"/></g>
+    <g class="sB1"><rect x="44" y="2" width="2" height="2" fill="#a9edbf"/></g>
+    <g class="sB2"><rect x="44" y="2" width="2" height="2" fill="#79d595"/></g>
+    <g class="sC1"><rect x="47" y="2" width="2" height="2" fill="#d94f4f"/></g>
+    <g class="sC2"><rect x="47" y="2" width="2" height="2" fill="#7c2d36"/></g>
+    <rect x="44" y="6" width="1" height="2" fill="#565e70"/>
+    <g class="streak"><rect x="44" y="6" width="1" height="2" fill="#a9edbf"/></g>
+    <rect x="67" y="9" width="10" height="8" fill="#1a4228"/>
+    <rect x="0" y="11" width="38" height="1" fill="#96a0b4"/>
+    <rect x="0" y="12" width="38" height="2" fill="#111d3a"/>
+    <rect x="0" y="14" width="38" height="1" fill="#2c3240"/>
+    <rect x="50" y="11" width="46" height="1" fill="#96a0b4"/>
+    <rect x="50" y="12" width="46" height="2" fill="#111d3a"/>
+    <rect x="50" y="14" width="46" height="1" fill="#2c3240"/>
+    <g>
+      <rect x="44" y="6" width="1" height="1" fill="#96a0b4"/>
+      <rect x="43" y="7" width="3" height="1" fill="#96a0b4"/>
+      <rect x="42" y="8" width="5" height="1" fill="#96a0b4"/>
+      <rect x="41" y="9" width="7" height="1" fill="#96a0b4"/>
+      <rect x="40" y="10" width="9" height="1" fill="#96a0b4"/>
+      <rect x="39" y="11" width="11" height="1" fill="#96a0b4"/>
+      <rect x="38" y="12" width="13" height="2" fill="#96a0b4"/>
+      <rect x="39" y="14" width="11" height="1" fill="#96a0b4"/>
+      <rect x="40" y="15" width="9" height="1" fill="#96a0b4"/>
+      <rect x="41" y="16" width="7" height="1" fill="#96a0b4"/>
+      <rect x="42" y="17" width="5" height="1" fill="#96a0b4"/>
+      <rect x="43" y="18" width="3" height="1" fill="#96a0b4"/>
+      <rect x="44" y="19" width="1" height="1" fill="#96a0b4"/>
+      <rect x="43" y="9" width="3" height="1" fill="#2c3240"/>
+      <rect x="42" y="10" width="5" height="1" fill="#2c3240"/>
+      <rect x="41" y="11" width="7" height="1" fill="#2c3240"/>
+      <rect x="40" y="12" width="9" height="2" fill="#2c3240"/>
+      <rect x="41" y="14" width="7" height="1" fill="#2c3240"/>
+      <rect x="42" y="15" width="5" height="1" fill="#2c3240"/>
+      <rect x="43" y="16" width="3" height="1" fill="#2c3240"/>
+      <rect x="43" y="11" width="3" height="3" fill="#327a42"/>
+    </g>
+    <g class="gGreen">
+      <rect x="40" y="9" width="9" height="8" fill="#79d595" filter="url(#bloom)" opacity="0.55"/>
+      <rect x="43" y="9" width="3" height="1" fill="#79d595"/>
+      <rect x="42" y="10" width="5" height="1" fill="#79d595"/>
+      <rect x="41" y="11" width="7" height="1" fill="#79d595"/>
+      <rect x="40" y="12" width="9" height="2" fill="#79d595"/>
+      <rect x="41" y="14" width="7" height="1" fill="#79d595"/>
+      <rect x="42" y="15" width="5" height="1" fill="#79d595"/>
+      <rect x="43" y="16" width="3" height="1" fill="#79d595"/>
+      <rect x="43" y="11" width="3" height="3" fill="#a9edbf"/>
+    </g>
+    <g class="gRed">
+      <rect x="40" y="9" width="9" height="8" fill="#d94f4f" filter="url(#bloom)" opacity="0.5"/>
+      <rect x="43" y="9" width="3" height="1" fill="#7c2d36"/>
+      <rect x="42" y="10" width="5" height="1" fill="#7c2d36"/>
+      <rect x="41" y="11" width="7" height="1" fill="#7c2d36"/>
+      <rect x="40" y="12" width="9" height="2" fill="#7c2d36"/>
+      <rect x="41" y="14" width="7" height="1" fill="#7c2d36"/>
+      <rect x="42" y="15" width="5" height="1" fill="#7c2d36"/>
+      <rect x="43" y="16" width="3" height="1" fill="#7c2d36"/>
+      <rect x="43" y="11" width="3" height="3" fill="#d94f4f"/>
+    </g>
+    <rect x="66" y="8" width="12" height="1" fill="#68ba6e"/>
+    <rect x="66" y="17" width="12" height="1" fill="#68ba6e"/>
+    <rect x="66" y="9" width="1" height="2" fill="#68ba6e"/>
+    <rect x="77" y="9" width="1" height="2" fill="#68ba6e"/>
+    <rect x="66" y="15" width="1" height="2" fill="#68ba6e"/>
+    <rect x="77" y="15" width="1" height="2" fill="#68ba6e"/>
+    <g class="chamber">
+      <rect x="65" y="7" width="15" height="1" fill="#79d595" fill-opacity="0.45"/>
+      <rect x="65" y="18" width="15" height="1" fill="#79d595" fill-opacity="0.45"/>
+      <rect x="65" y="8" width="1" height="10" fill="#79d595" fill-opacity="0.45"/>
+      <rect x="79" y="8" width="1" height="10" fill="#79d595" fill-opacity="0.45"/>
+      <rect x="67" y="9" width="10" height="8" fill="#a9edbf" fill-opacity="0.3"/>
+      <rect x="66" y="8" width="12" height="1" fill="#a9edbf"/>
+      <rect x="66" y="17" width="12" height="1" fill="#a9edbf"/>
+    </g>
+    <rect x="43" y="19" width="3" height="3" fill="#2c3240"/>
+    <rect x="40" y="22" width="9" height="5" fill="#7c2d36"/>
+    <rect x="41" y="23" width="7" height="3" fill="#080c18"/>
+    <rect x="43" y="23" width="1" height="3" fill="#2c3240"/>
+    <rect x="45" y="23" width="1" height="3" fill="#2c3240"/>
+    <g class="pA">
+      <rect x="0" y="12" width="1" height="2" fill="#46a86a"/>
+      <rect x="1" y="12" width="2" height="2" fill="#a9edbf"/>
+      <rect x="3" y="12" width="1" height="2" fill="#79d595"/>
+    </g>
+    <g class="pB">
+      <rect x="0" y="12" width="1" height="2" fill="#46a86a"/>
+      <rect x="1" y="12" width="2" height="2" fill="#a9edbf"/>
+      <rect x="3" y="12" width="1" height="2" fill="#79d595"/>
+    </g>
+    <g class="pC">
+      <rect x="0" y="12" width="1" height="2" fill="#46a86a"/>
+      <rect x="1" y="12" width="2" height="2" fill="#a9edbf"/>
+      <rect x="3" y="12" width="1" height="2" fill="#79d595"/>
+    </g>
+    <g class="ember"><rect x="43" y="12" width="3" height="2" fill="#d94f4f"/></g>
+  </g>
+  <!-- pipe end ports -->
+  <rect x="0" y="19" width="3" height="6" fill="#565e70"/>
+  <rect x="197" y="19" width="3" height="6" fill="#565e70"/>
+  <!-- labels (light-theme ink; derived from gatecheck.svg by color swap) -->
+  <g font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" paint-order="stroke" stroke="#ffffff" stroke-width="0.7" stroke-linejoin="round">
+    <text x="96.5" y="6.5" text-anchor="middle" font-size="3.6" font-weight="600" fill="#0d1426">Signed, tamper-evident log</text>
+    <text x="6" y="18" font-size="3.1" fill="#565e70">proposes an action</text>
+    <text x="22" y="43" text-anchor="middle" font-size="3.6" font-weight="600" fill="#0d1426">Untrusted AI agent</text>
+    <text x="92" y="18" text-anchor="end" font-size="3.6" font-weight="600" fill="#0d1426">Deterministic gate</text>
+    <text x="133" y="18" font-size="3.6" font-weight="600"><tspan font-size="3.1" font-weight="400" fill="#565e70">allow </tspan><tspan fill="#327a42">Runs</tspan></text>
+    <text x="96.5" y="40" text-anchor="middle" font-size="3.6" font-weight="600"><tspan font-size="3.1" font-weight="400" fill="#565e70">block </tspan><tspan fill="#7c2d36">Refused</tspan></text>
+  </g>
+</svg>

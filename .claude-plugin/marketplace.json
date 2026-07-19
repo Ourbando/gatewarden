@@ -1,0 +1,30 @@
+{
+  "name": "railward",
+  "description": "Railward: a fail-closed gate for untrusted AI coding agents, with a re-runnable signed proof of every blocked action.",
+  "owner": {
+    "name": "Armando Shkambi",
+    "email": "ourbando@proton.me"
+  },
+  "plugins": [
+    {
+      "name": "railward",
+      "source": "./",
+      "description": "Fail-closed gate for untrusted AI coding agents. A pure function decides allow, deny, or ask at the PreToolUse choke point, and every decision signs a re-runnable proof of what was blocked.",
+      "author": {
+        "name": "Armando Shkambi"
+      },
+      "homepage": "https://github.com/Ourbando/railward",
+      "repository": "https://github.com/Ourbando/railward",
+      "license": "MIT",
+      "category": "security",
+      "keywords": [
+        "security",
+        "safety",
+        "guardrail",
+        "ai-agents",
+        "hooks",
+        "pretooluse"
+      ]
+    }
+  ]
+}

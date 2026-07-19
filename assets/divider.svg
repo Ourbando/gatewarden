@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="28" viewBox="0 0 190 7" shape-rendering="crispEdges">
+  <style>
+    .pulse { animation: ride 8s linear infinite; }
+    @keyframes ride {
+      from { transform: translateX(-10px); }
+      to   { transform: translateX(200px); }
+    }
+  </style>
+  <defs>
+    <clipPath id="glass"><rect x="2" y="2" width="186" height="2"/></clipPath>
+  </defs>
+  <rect x="0" y="0" width="2" height="7" fill="#565e70"/>
+  <rect x="188" y="0" width="2" height="7" fill="#565e70"/>
+  <rect x="0" y="0" width="2" height="1" fill="#96a0b4"/>
+  <rect x="188" y="0" width="2" height="1" fill="#96a0b4"/>
+  <rect x="2" y="1" width="186" height="1" fill="#96a0b4"/>
+  <rect x="2" y="2" width="186" height="2" fill="#111d3a"/>
+  <rect x="2" y="4" width="186" height="1" fill="#2c3240"/>
+  <rect x="71" y="0" width="1" height="1" fill="#1f9d6b"/>
+  <rect x="72" y="0" width="1" height="1" fill="#34d399"/>
+  <rect x="73" y="0" width="1" height="1" fill="#1f9d6b"/>
+  <g clip-path="url(#glass)">
+    <g class="pulse">
+      <rect x="0" y="2" width="1" height="2" fill="#46a86a"/>
+      <rect x="1" y="2" width="1" height="2" fill="#79d595"/>
+      <rect x="2" y="2" width="2" height="2" fill="#a9edbf"/>
+      <rect x="4" y="2" width="1" height="2" fill="#79d595"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,86 @@
+name: ci
+on: [push, pull_request]
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.10", "3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e ".[dev]"
+      - run: python -m pytest -q
+      - name: README numbers are bound to reality (no overclaim)
+        run: python claims_check.py
+      - name: example policies lint clean
+        run: |
+          python -m railward.cli lint --policy examples/safe.yaml
+          python -m railward.cli lint --policy examples/strict.yaml
+      - name: proof is green
+        run: |
+          python -m railward.cli attack --key /tmp/ci.pem --out /tmp/proof.json
+          python -m railward.cli verify /tmp/proof.json --pubkey /tmp/ci.pub
+      - name: proof is deterministic (same inputs -> same head, any key)
+        run: |
+          python -m railward.cli attack --key /tmp/d1.pem --out /tmp/d1.json
+          python -m railward.cli attack --key /tmp/d2.pem --out /tmp/d2.json
+          python - <<'PY'
+          import json
+          a = json.load(open("/tmp/d1.json"))["head"]
+          b = json.load(open("/tmp/d2.json"))["head"]
+          assert a == b, f"nondeterministic proof head: {a} != {b}"
+          print("deterministic head:", a[:16])
+          PY
+      - name: holed policy is caught (proof goes red)
+        run: |
+          python -m railward.cli attack --policy examples/holey.yaml --key /tmp/ci.pem --out /tmp/holey.json && exit 1 || true
+
+  mutation-gate:
+    # The tests must have teeth: every hand-picked mutation that removes a protection must turn
+    # the suite red. A survivor is a hole in the tests and fails the build.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: python scripts/mutation_check.py
+
+  publish-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash publish_gate.sh
+
+  release-proof:
+    # On a version tag, generate a fresh signed proof and attach it plus its public key to the
+    # release, so anyone can download both and run `railward verify proof.json --pubkey pubkey.pem`.
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test, publish-gate]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e "."
+      - name: generate the release proof and its public key
+        run: |
+          python -m railward.cli attack --key /tmp/rel.pem --out proof.json
+          cp /tmp/rel.pub pubkey.pem
+      - name: attach proof and pubkey to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # Create the release with the assets if it does not exist yet; otherwise add/replace them.
+        run: |
+          gh release create "$GITHUB_REF_NAME" proof.json pubkey.pem --generate-notes \
+            || gh release upload "$GITHUB_REF_NAME" proof.json pubkey.pem --clobber

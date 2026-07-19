@@ -1,0 +1,54 @@
+name: railward
+description: Run the railward adversary against your policy and fail the build if anything leaks.
+branding:
+  icon: shield
+  color: green
+
+inputs:
+  policy:
+    description: Path to your policy YAML.
+    required: false
+    default: examples/safe.yaml
+  python-version:
+    description: Python to run the gate on.
+    required: false
+    default: "3.12"
+
+outputs:
+  total:
+    description: Number of attacks in the adversary.
+    value: ${{ steps.gate.outputs.total }}
+  blocked:
+    description: Number of attacks blocked.
+    value: ${{ steps.gate.outputs.blocked }}
+  leaked:
+    description: Number of attacks that leaked (build fails if greater than zero).
+    value: ${{ steps.gate.outputs.leaked }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+    - name: install railward
+      shell: bash
+      run: pip install "railward @ git+https://github.com/Ourbando/railward" 2>/dev/null || pip install railward
+    - name: run the adversary against the policy
+      id: gate
+      shell: bash
+      env:
+        POLICY: ${{ inputs.policy }}   # via env, never interpolated into the command line
+      run: |
+        set -o pipefail
+        out=$(railward attack --policy "$POLICY" --key /tmp/railward.pem --out proof.json) || true
+        echo "$out"
+        total=$(echo "$out" | sed -E 's/^([0-9]+) attacks.*/\1/')
+        blocked=$(echo "$out" | sed -E 's/.* ([0-9]+) blocked.*/\1/')
+        leaked=$(echo "$out" | sed -E 's/.* ([0-9]+) leaked.*/\1/')
+        echo "total=$total"   >> "$GITHUB_OUTPUT"
+        echo "blocked=$blocked" >> "$GITHUB_OUTPUT"
+        echo "leaked=$leaked" >> "$GITHUB_OUTPUT"
+        echo "### railward: $blocked/$total blocked, $leaked leaked" >> "$GITHUB_STEP_SUMMARY"
+        railward verify proof.json --pubkey /tmp/railward.pub >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
+        test "${leaked:-1}" = "0"

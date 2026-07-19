@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>railward · verify a proof</title>
+<style>
+  /* Strictly terminal. Dracula. Monospace or nothing. */
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: #282a36; color: #f8f8f2;
+    font: 15px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    padding: 40px 20px;
+  }
+  ::selection { background: #44475a; }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  pre { white-space: pre-wrap; word-break: break-word; font: inherit; }
+  .prompt { color: #f8f8f2; }
+  .prompt .dollar { color: #50fa7b; }
+  .comment { color: #6272a4; }
+  .gap { height: 1.6em; }
+  textarea {
+    width: 100%; resize: vertical; background: #21222c; color: #f8f8f2;
+    border: 1px solid #44475a; border-radius: 0; padding: 10px 12px; font: inherit;
+    display: block;
+  }
+  textarea:focus { outline: none; border-color: #50fa7b; }
+  textarea#pubkey { min-height: 96px; }
+  textarea#proof { min-height: 200px; }
+  textarea::placeholder { color: #6272a4; }
+  .row { display: flex; gap: 28px; align-items: baseline; margin-top: 10px; flex-wrap: wrap; }
+  button, .loadbtn {
+    background: none; border: 0; padding: 0; font: inherit; cursor: pointer; display: inline;
+  }
+  button { color: #50fa7b; }
+  button:hover, button:focus-visible { background: #50fa7b; color: #282a36; outline: none; }
+  .loadbtn { color: #8be9fd; }
+  .loadbtn:hover { background: #8be9fd; color: #282a36; }
+  input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  #result { display: none; margin-top: 4px; }
+  #result.ok { display: block; color: #50fa7b; }
+  #result.fail { display: block; color: #ff5555; }
+  .cursor { display: inline-block; width: .6em; height: 1.1em; background: #f8f8f2;
+            vertical-align: text-bottom; animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  a { color: #8be9fd; text-decoration: none; }
+  a:hover { background: #8be9fd; color: #282a36; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<pre class="prompt"><span class="dollar">$</span> railward verify proof.json --pubkey pubkey.pem</pre>
+<pre class="comment"># Paste a proof.json and the signer's public key. Your browser recomputes
+# the hash chain and checks the Ed25519 signature. Nothing is uploaded;
+# this page makes no network calls.</pre>
+
+<div class="gap"></div>
+<pre class="comment"># signer public key (PEM)</pre>
+<textarea id="pubkey" spellcheck="false">-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAq7ZGAWmEWv7onXawU9/1iRMGwjLnoPLoT/XG1MG19y4=
+-----END PUBLIC KEY-----</textarea>
+
+<div class="gap"></div>
+<pre class="comment"># proof.json</pre>
+<textarea id="proof" spellcheck="false" placeholder="paste the contents of proof.json here, or drop the file anywhere on this page"></textarea>
+
+<div class="row">
+  <button id="go">[ verify ]</button>
+  <label class="loadbtn" for="file">[ load proof.json ]</label>
+  <input type="file" id="file" accept="application/json,.json">
+</div>
+
+<div class="gap"></div>
+<pre id="result"></pre>
+
+<div class="gap"></div>
+<pre class="comment"># Deterministic and offline. Uses the WebCrypto Ed25519 primitive
+# (recent Chrome, Firefox, Safari).
+# Source and CLI: <a href="https://github.com/Ourbando">github.com/Ourbando</a></pre>
+
+<div class="gap"></div>
+<pre class="prompt"><span class="dollar">$</span> <span class="cursor"></span></pre>
+</div>
+
+<script>
+const enc = new TextEncoder();
+
+// Canonical JSON: sorted keys, compact separators, matching the signer's Python
+// json.dumps(sort_keys=True, separators=(",",":"), ensure_ascii=False).
+function canonical(obj) {
+  if (obj === null) return "null";
+  if (Array.isArray(obj)) return "[" + obj.map(canonical).join(",") + "]";
+  if (typeof obj === "object") {
+    return "{" + Object.keys(obj).sort()
+      .map(k => JSON.stringify(k) + ":" + canonical(obj[k])).join(",") + "}";
+  }
+  return JSON.stringify(obj);
+}
+
+function hexToBytes(hex) {
+  const out = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(hex.substr(i * 2, 2), 16);
+  return out;
+}
+
+function bytesToHex(buf) {
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function sha256hex(bytes) {
+  return bytesToHex(await crypto.subtle.digest("SHA-256", bytes));
+}
+
+function concatBytes(a, b) {
+  const out = new Uint8Array(a.length + b.length);
+  out.set(a, 0); out.set(b, a.length);
+  return out;
+}
+
+async function recordHash(record, prev) {
+  const body = {};
+  for (const k of Object.keys(record)) if (k !== "hash" && k !== "sig") body[k] = record[k];
+  return sha256hex(concatBytes(enc.encode(canonical(body)), enc.encode(prev)));
+}
+
+function pemToDer(pem) {
+  const b64 = pem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
+  const raw = atob(b64);
+  const der = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) der[i] = raw.charCodeAt(i);
+  return der;
+}
+
+async function verify(proof, pem) {
+  const chain = proof.chain || [];
+  let prev = "";
+  for (let i = 0; i < chain.length; i++) {
+    const r = chain[i];
+    if (r.seq !== i) return { ok: false, msg: `chain order broken at index ${i}` };
+    if ((r.prev || "") !== prev) return { ok: false, msg: `chain link broken at seq ${i}` };
+    if (r.hash !== await recordHash(r, prev)) return { ok: false, msg: `record altered at seq ${i}` };
+    prev = r.hash;
+  }
+  let key;
+  try {
+    key = await crypto.subtle.importKey("spki", pemToDer(pem), { name: "Ed25519" }, false, ["verify"]);
+  } catch (e) {
+    return { ok: false, msg: "could not read the public key (is it an Ed25519 PEM?)" };
+  }
+  const sigOk = await crypto.subtle.verify({ name: "Ed25519" }, key, hexToBytes(proof.sig), enc.encode(prev));
+  if (!sigOk) return { ok: false, msg: "signature does not verify against this key" };
+
+  const attacks = chain.filter(r => "attack" in r);
+  const probes = chain.filter(r => "probe" in r);
+  const leaked = attacks.filter(r => r.leaked).length;
+  const open = probes.filter(r => r.failed_open).length;
+  if (leaked || open) {
+    return { ok: false, msg: `signed and intact, but ${leaked} attack(s) leaked and ${open} probe(s) failed open` };
+  }
+  return {
+    ok: true,
+    msg: `${attacks.length} attacks + ${probes.length} fail-open probes, chain intact, signature valid, 0 leaked, 0 fail-open`,
+  };
+}
+
+function show(res) {
+  const el = document.getElementById("result");
+  el.className = res.ok ? "ok" : "fail";
+  const face = res.ok ? "(^‿^)" : "(>_<)";
+  const word = res.ok ? "VERIFIED" : "FAIL";
+  el.textContent =
+`  ╭───────╮
+  │ ${face} │  ${word}
+  ╰──╥─╥──╯
+${res.ok ? "OK" : "FAIL"}: ${res.msg}`;
+}
+
+async function run() {
+  if (!(crypto.subtle && crypto.subtle.verify)) {
+    return show({ ok: false, msg: "this browser has no WebCrypto Ed25519; try a recent Chrome, Firefox, or Safari" });
+  }
+  let proof;
+  try {
+    proof = JSON.parse(document.getElementById("proof").value);
+  } catch (e) {
+    return show({ ok: false, msg: "proof.json is not valid JSON" });
+  }
+  try {
+    show(await verify(proof, document.getElementById("pubkey").value));
+  } catch (e) {
+    show({ ok: false, msg: "error: " + e.message });
+  }
+}
+
+function readProof(f) {
+  const reader = new FileReader();
+  reader.onload = () => { document.getElementById("proof").value = reader.result; run(); };
+  reader.readAsText(f);
+}
+
+document.getElementById("go").addEventListener("click", run);
+document.getElementById("file").addEventListener("change", ev => {
+  if (ev.target.files[0]) readProof(ev.target.files[0]);
+});
+document.addEventListener("dragover", ev => ev.preventDefault());
+document.addEventListener("drop", ev => {
+  ev.preventDefault();
+  if (ev.dataTransfer.files[0]) readProof(ev.dataTransfer.files[0]);
+});
+</script>
+</body>
+</html>

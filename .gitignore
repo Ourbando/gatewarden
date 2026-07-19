@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+
+# signing keys and generated proofs never ship (except the committed reference pubkey)
+keys/
+*.pem
+!examples/pubkey.pem
+proof.json

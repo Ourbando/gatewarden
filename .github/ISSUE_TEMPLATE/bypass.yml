@@ -1,0 +1,44 @@
+name: Gate bypass
+description: An action slipped past a policy that should have stopped it
+labels: ["bypass"]
+body:
+  - type: markdown
+    attributes:
+      value: A good bypass report is a new attack. If you can, fill in the adversary entry at the bottom so we can reproduce it as a failing case.
+  - type: textarea
+    id: action
+    attributes:
+      label: The action
+      description: The tool call or command that got through.
+      placeholder: '{"action": "bash", "command": "..."}'
+    validations:
+      required: true
+  - type: textarea
+    id: policy
+    attributes:
+      label: The policy
+      description: The policy file, or the relevant rules, that was in force.
+      render: yaml
+    validations:
+      required: true
+  - type: input
+    id: expected
+    attributes:
+      label: Expected verdict
+      placeholder: deny
+    validations:
+      required: true
+  - type: input
+    id: actual
+    attributes:
+      label: Actual verdict
+      placeholder: allow
+    validations:
+      required: true
+  - type: textarea
+    id: attack
+    attributes:
+      label: Adversary entry (optional but ideal)
+      description: A one-line entry for railward/adversary.py that reproduces it.
+      placeholder: '{"name": "bash-...", "request": {"action": "bash", "command": "..."}}'
+      render: python
