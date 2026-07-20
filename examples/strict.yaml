@@ -55,17 +55,394 @@ rules:
     path: '*.ssh*'
     reason: key material is off limits
 
+  # --- Credential stores, named by path in BOTH forms (ATT&CK T1552) ---
+  # These carry the '**/' prefix, which matches at every depth INCLUDING none. That is the fix for
+  # a real leak: '/home/u/.aws/credentials' was refused while a bare './.aws/credentials' was
+  # allowed as an ordinary workspace read, so the protection depended on how the path was spelled.
+  - id: deny-cloud-credentials
+    effect: deny
+    action: '*'
+    path: '**/.{aws,kube,azure,gnupg,docker}/**'
+    reason: cloud or cluster credentials
+
+  - id: deny-credential-files
+    effect: deny
+    action: '*'
+    path: '**/.{npmrc,netrc,git-credentials,pypirc,pgpass,my.cnf,vault-token}'
+    reason: stored service credentials
+
+  - id: deny-credential-configs
+    effect: deny
+    action: '*'
+    path: '**/.config/{gcloud,gh,rclone,solana}/**'
+    reason: cloud CLI credential store
+
+  - id: deny-wallets
+    effect: deny
+    action: '*'
+    path: '**/.{ethereum,bitcoin}/**'
+    reason: cryptocurrency wallet material
+
+  - id: deny-shell-history
+    effect: deny
+    action: '*'
+    path: '**/.{bash_history,zsh_history,psql_history,mysql_history}'
+    reason: shell history often contains typed secrets
+
+  - id: deny-terraform-state
+    effect: deny
+    action: '*'
+    path: '**/*.tfstate*'
+    reason: terraform state stores secrets in plaintext
+
+  - id: deny-system-secret-files
+    effect: deny
+    action: '*'
+    path: '/{etc/shadow,etc/sudoers*,etc/gshadow,root/**}'
+    reason: system credential or root-owned file
+
+  - id: deny-proc-environ
+    effect: deny
+    action: '*'
+    path: '/proc/**'
+    reason: process memory and environment (other processes' secrets)
+
+  # A read of the home directory is not a workspace read. Without this, `grep -ri password ~`
+  # sweeps every credential on the host through a command the allow-list recognizes.
+  # The macOS root is written as a character class so this pattern is not itself a grep hit for a
+  # personal home path when the repo is scanned before publication.
+  - id: deny-home-sweep
+    effect: deny
+    action: '*'
+    path: '{~,~/**,/home/*,/[Uu]sers/*}'
+    reason: sweeps the whole home directory
+
   - id: deny-path-escape
     effect: deny
     action: '*'
     path: '../**'
     reason: path escapes the workspace
 
+  # --- Writes that reprogram the AGENT (OWASP ASI06 / LLM01) ---
+  # A gate that watches only the shell misses the quietest attack there is: the agent is told to
+  # edit the file that instructs the agent. Nothing executes, the diff looks like documentation,
+  # and every future session in the repo runs with the attacker's instructions. These are refused
+  # outright. Editing them is a human's job, done deliberately, not an agent's mid-task side effect.
+  - id: deny-agent-instructions
+    effect: deny
+    action: write
+    path: '**/{CLAUDE,AGENTS,GEMINI,QWEN}.md'
+    reason: writes the file that instructs the agent (persistent prompt injection)
+
+  - id: deny-agent-rules-files
+    effect: deny
+    action: write
+    path: '**/.{cursorrules,windsurfrules,clinerules,aider.conf.yml}'
+    reason: editor-agent instruction file
+
+  - id: deny-copilot-instructions
+    effect: deny
+    action: write
+    path: '**/.github/copilot-instructions.md'
+    reason: IDE-agent instruction file
+
+  - id: deny-mcp-config
+    effect: deny
+    action: write
+    path: '**/.mcp.json'
+    reason: adds or redirects agent tool providers (tool-definition poisoning)
+
+  - id: deny-agent-state
+    effect: deny
+    action: write
+    path: '**/.{claude,cursor,codeium,continue,aider}/**'
+    reason: agent settings, memory, or hook configuration
+
+  # --- Writes that disarm the GATE itself (OWASP ASI10 / ATT&CK T1562.001) ---
+  # Self-protection is not vanity. A gate an agent can edit is a suggestion, and the first move of
+  # any capable attacker is to turn the alarm off before doing anything that would trip it.
+  - id: deny-gate-self-tamper
+    effect: deny
+    action: write
+    path: '**/{railward,gatewarden}/**'
+    reason: writes the gate's own decision core
+
+  - id: deny-policy-tamper
+    effect: deny
+    action: write
+    path: '**/*{policy,strict,safe}.{yaml,yml}'
+    reason: rewrites the policy the gate enforces
+
+  - id: deny-proof-tamper
+    effect: deny
+    action: write
+    path: '**/*proof*.json'
+    reason: forges the signed attestation
+
+  - id: deny-key-material-paths
+    effect: deny
+    action: '*'
+    path: '**/{keys,*.pem,*.key,*.p12,*.pfx,id_rsa*,id_ed25519*}'
+    reason: signing or private key material
+
+  - id: deny-key-material-nested
+    effect: deny
+    action: '*'
+    path: '**/keys/**'
+    reason: signing or private key material
+
+  # --- Writes that run code later (supply chain, ATT&CK T1195.001 / T1546) ---
+  # None of these execute when written. All of them execute on the next commit, build, container
+  # start, CI run, or editor task, which is precisely why they are the preferred place to hide.
+  - id: deny-git-hooks
+    effect: deny
+    action: write
+    path: '**/.git/**'
+    reason: git internals, hooks run on the next git operation
+
+  - id: deny-gitattributes
+    effect: deny
+    action: write
+    path: '**/.gitattributes'
+    reason: filter drivers run shell commands on checkout
+
+  - id: deny-ci-workflows
+    effect: deny
+    action: write
+    path: '**/.{github,gitlab,circleci,buildkite}/**'
+    reason: CI config runs attacker code with repository secrets
+
+  - id: deny-build-scripts
+    effect: deny
+    action: write
+    path: '**/{Dockerfile*,Makefile,setup.py,.pre-commit-config.yaml,.envrc,docker-compose*.yml}'
+    reason: build or hook script that runs on the next build
+
+  - id: deny-editor-tasks
+    effect: deny
+    action: write
+    path: '**/.{vscode,idea}/**'
+    reason: editor task definitions run on the next editor task
+
   - id: deny-absolute-write
     effect: deny
     action: write
     path: '/**'
     reason: absolute-path write
+
+  # --- Named dangerous classes, refused by name rather than by default ---
+  # Everything below was already blocked by the fail-closed default. That is not the same as being
+  # covered: the moment an operator adds one broad allow for real work, a default-only class opens
+  # and nothing warns them. A named deny sits ahead of every allow and survives that edit.
+
+  - id: deny-destructive-extended
+    effect: deny
+    action: bash
+    command: '\b(wipefs|truncate|chattr|fallocate|mknod|insmod|modprobe|rmmod)\b|\bfind\b[^|;]*\s-delete\b|\b(mv|cp)\b[^|;]*\s/dev/null\b'
+    reason: destroys data, locks files, or loads kernel code
+
+  - id: deny-system-binary-overwrite
+    effect: deny
+    action: bash
+    command: '\b(cp|mv|install|ln)\b[^|;]*\s/(s?bin|usr/s?bin|usr/local/s?bin|etc)/'
+    reason: trojans a system binary or system config
+
+  - id: deny-env-dump
+    effect: deny
+    action: bash
+    command: '^env\s*$|^env\s*\||\bprintenv\b'
+    reason: dumps environment variables (secrets in env)
+
+  - id: deny-loader-injection
+    effect: deny
+    action: bash
+    command: '\b(LD_PRELOAD|LD_LIBRARY_PATH|DYLD_INSERT_LIBRARIES|BASH_ENV|NODE_OPTIONS|PYTHONSTARTUP)=|\bsource\s+/|^\.\s+/'
+    reason: injects code into process startup
+
+  - id: deny-git-config-abuse
+    effect: deny
+    action: bash
+    command: '\bgit\s+config\b[^|;]*(core\.hooksPath|core\.sshCommand|credential\.helper|insteadOf|http\.sslVerify|alias\.)|\bgit\s+remote\s+(add|set-url)\b|\bgit\s+push\b[^|;]*--delete\b|\bgit\s+filter-branch\b|\bgit\s+config\s+--list\b'
+    reason: redirects git to attacker-controlled code, or destroys or leaks refs
+
+  - id: deny-privilege-extended
+    effect: deny
+    action: bash
+    command: '\b(pkexec|setcap|useradd|usermod|groupadd|visudo|adduser)\b'
+    reason: privilege escalation or account creation
+
+  - id: deny-defense-evasion
+    effect: deny
+    action: bash
+    command: '\b(iptables|ip6tables|nft|ufw|firewall-cmd|setenforce|auditctl|swapoff)\b|\baa-(disable|complain)\b|\bjournalctl\b[^|;]*--vacuum|\bunset\s+HISTFILE\b|\bHISTSIZE=0\b|\btouch\s+-r\b|\bsysctl\s+-w\b'
+    reason: disables a security control or destroys forensic evidence
+
+  - id: deny-tls-verify-off
+    effect: deny
+    action: bash
+    command: '\b(PYTHONHTTPSVERIFY=0|NODE_TLS_REJECT_UNAUTHORIZED=0)\b|http\.sslVerify\s+false|--trusted-host\b|--no-check-certificate\b'
+    reason: disables TLS verification (enables MITM of downloads)
+
+  - id: deny-ca-trust-install
+    effect: deny
+    action: bash
+    command: '\bupdate-ca-certificates\b|\bsecurity\s+add-trusted-cert\b|\bcertutil\s+-addstore\b'
+    reason: installs a root CA (enables MITM)
+
+  - id: deny-system-control
+    effect: deny
+    action: bash
+    command: '\b(reboot|shutdown|halt|poweroff)\b|/proc/sysrq-trigger'
+    reason: host availability
+
+  - id: deny-cloud-mutation
+    effect: deny
+    action: bash
+    command: '\baws\s+(iam|cloudtrail|kms|lambda|s3api)\b|\baws\s+ec2\s+(terminate-instances|authorize-security-group-ingress)\b|\baws\s+s3\s+(cp|sync|mv|rm)\b|\bgsutil\s+(cp|rsync|mv|rm)\b|\bgcloud\s+projects\s+add-iam-policy-binding\b|\baz\s+role\s+assignment\b|\bterraform\s+(destroy|apply)\b'
+    reason: cloud IAM, audit-log, storage, or infrastructure mutation
+
+  - id: deny-container-escape
+    effect: deny
+    action: bash
+    command: '\bdocker\s+run\b[^|;]*(--privileged|--pid=host|--net=host|docker\.sock|-v\s+/:)|\bdocker\s+cp\b|\b(nsenter|unshare|chroot)\b'
+    reason: container escape or host filesystem access
+
+  - id: deny-kubernetes-mutation
+    effect: deny
+    action: bash
+    command: '\bkubectl\s+(delete|apply|exec|cp|drain)\b|\bkubectl\s+get\s+secret|\bkubectl\s+config\s+view\b|\bhelm\s+(install|upgrade)\b'
+    reason: cluster mutation, secret access, or lateral movement
+
+  - id: deny-database-destructive
+    effect: deny
+    action: bash
+    command: '\bdrop\s+(database|table|schema)\b|\btruncate\s+table\b|\bflush(all|db)\b|\bmigrate\b[^|;]*\szero\b'
+    reason: destroys database contents
+
+  - id: deny-recon
+    effect: deny
+    action: bash
+    command: '\b(nmap|masscan|netstat|tcpdump|arp|ifconfig|whoami|hostname|id)\b|\bss\s+-|\bip\s+a\b|\baws\s+configure\s+list\b|\bsts\s+get-caller-identity\b'
+    reason: host, network, or identity reconnaissance
+
+  - id: deny-tunnel-channels
+    effect: deny
+    action: bash
+    command: '\b(dig|nslookup|host|ping|ping6|socat|ngrok|iodine|chisel)\b'
+    reason: DNS, ICMP, or reverse-tunnel exfiltration channel
+
+  - id: deny-resource-exhaustion
+    effect: deny
+    action: bash
+    command: '\b(stress-ng|stress|xmrig|minerd|cpuminer)\b|\byes\b\s*\||\btc\s+qdisc\b'
+    reason: resource exhaustion or cryptomining
+
+  - id: deny-make-foreign-file
+    effect: deny
+    action: bash
+    command: '\bmake\b[^|;]*\s-(f|-file)[=\s]'
+    reason: runs recipes from an arbitrary makefile
+
+  - id: deny-mcp-server-add
+    effect: deny
+    action: bash
+    command: '\bmcp\s+add\b'
+    reason: adds an agent tool provider (rug-pull surface)
+
+  - id: deny-gate-env-tamper
+    effect: deny
+    action: bash
+    command: '\b(unset|export)\s+RAILWARD_|\bRAILWARD_POLICY='
+    reason: disables or redirects the gate itself
+
+  # Piping into a shell is the oldest trick here: `echo hi | sh` reaches an interpreter through a
+  # segment the allow-list recognized. The decomposition already caught it on the fail-closed
+  # default, but the default is exactly what an operator's broad allow removes, so it is named.
+  - id: deny-shell-interpreter
+    effect: deny
+    action: bash
+    command: '^(sh|bash|zsh|dash|ksh|csh|tcsh|fish|eval|exec)\b'
+    reason: hands control to a shell interpreter
+
+  # Decode-then-execute is the standard way a payload gets past a reader, human or machine:
+  # `echo <base64> | base64 -d | sh` shows nothing dangerous until the moment it runs.
+  - id: deny-obfuscated-decode
+    effect: deny
+    action: bash
+    command: '\bbase(64|32)\b[^|;]*\s(-d|-D|--decode)\b|\bxxd\s+-r\b|\buudecode\b'
+    reason: decodes an obfuscated payload
+
+  - id: deny-clipboard-read
+    effect: deny
+    action: bash
+    command: '\b(pbpaste|xclip|xsel|wl-paste)\b'
+    reason: harvests the clipboard
+
+  # --- Platform parity: macOS and Windows, not just Linux ---
+  # A gate that only knows Linux command names is not a gate on a developer laptop or a Windows
+  # runner. These classes were entirely default-only before, on the two platforms most agents
+  # actually run on.
+  - id: deny-macos-security-controls
+    effect: deny
+    action: bash
+    command: '\b(spctl|csrutil|tccutil|tmutil|dscl|nvram|mdfind|launchctl)\b|\bsecurity\s+(dump-keychain|find-generic-password|find-internet-password|add-trusted-cert)\b|\bdefaults\s+write\b'
+    reason: macOS security control, keychain, or login persistence
+
+  - id: deny-windows-lolbins
+    effect: deny
+    action: bash
+    command: '\b(powershell|pwsh|certutil|bitsadmin|wmic|vssadmin|wevtutil|schtasks|regsvr32|mshta|rundll32|cscript|wscript)\b|\breg\s+(add|delete)\b|\bnet\s+(user|localgroup)\b'
+    reason: Windows LOLBin, persistence, or defense-evasion command
+
+  - id: deny-windows-defender-off
+    effect: deny
+    action: bash
+    command: '\b(Set|Add)-MpPreference\b|DisableRealtimeMonitoring|ExclusionPath'
+    reason: disables or blinds Windows Defender
+
+  # --- Dual-use developer surfaces: surfaced to a human, not refused ---
+  # These are things a coding agent has a legitimate reason to do and an attacker has a
+  # legitimate-looking reason to do. Denying them makes the gate unadoptable; allowing them is how
+  # a vulnerable pin or a malicious dependency lands. So they ask. That split is the design: deny
+  # what is never legitimate, ask what is merely dangerous.
+  - id: ask-package-install
+    effect: ask
+    action: bash
+    command: '\b(pip3?|pipx|uv)\s+install\b|\bnpm\s+(install|i|add)\b|\byarn\s+add\b|\bpnpm\s+(add|install)\b|\b(gem|cargo|go)\s+install\b|\bbrew\s+(install|tap)\b|\b(npx|uvx|bunx)\b|\bcomposer\s+require\b|\b(apt|apt-get|yum|dnf|apk)\s+(install|add)\b'
+    reason: downloads and runs third-party code (supply chain)
+
+  # Interpreter inline code. `python -c` is normal developer work, so denying it outright makes the
+  # gate unadoptable, but the string it runs is code the gate cannot fully read. Two things happen:
+  # the string is recursed back through the gate (so an inline `rm -rf /` or `curl | sh` is DENIED
+  # by the rules that already name those), and whatever survives that asks rather than runs.
+  # The honest ceiling: `python -c "shutil.rmtree('/')"` carries no token any rule names. Token
+  # matching cannot read intent, and this rule does not pretend otherwise. See THREAT_MODEL.md.
+  - id: ask-interpreter-inline
+    effect: ask
+    action: bash
+    command: '\b(python3?|node|deno|bun|perl|ruby|php|Rscript)\b[^|;]*\s-(c|e|r|E)\b|\b(sh|bash|zsh|dash|ksh)\s+-c\b'
+    reason: runs inline code the gate cannot fully read
+
+  - id: ask-dependency-manifests
+    effect: ask
+    action: write
+    path: '**/{package.json,package-lock.json,requirements*.txt,Pipfile*,poetry.lock,go.mod,go.sum,Cargo.toml,Cargo.lock,Gemfile*,pnpm-lock.yaml,yarn.lock}'
+    reason: changes the dependency graph (supply-chain surface)
+
+  - id: ask-gitignore
+    effect: ask
+    action: write
+    path: '**/.gitignore'
+    reason: can conceal files from review
+
+  # Indirect prompt injection: a poisoned document is retrieved into context and its text is read
+  # as instructions. Which documents are indexed is deployment-specific, so point this at YOUR
+  # retrieval corpus. It asks rather than denies because writing documentation is normal work.
+  - id: ask-indexed-corpus
+    effect: ask
+    action: write
+    path: '**/docs/knowledge/**'
+    reason: retrieved into agent context (indirect prompt injection)
 
   # --- Everyday workflow, permitted (relative paths only; absolutes fall through) ---
   - id: allow-workspace-reads

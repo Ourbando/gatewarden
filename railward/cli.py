@@ -134,6 +134,57 @@ def cmd_lint(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_coverage(args: argparse.Namespace) -> int:
+    """Measure the policy against the threat taxonomy, per category.
+
+    The headline number is not "how much did it block" (a default-deny gate blocks nearly
+    everything) but how much it blocks BY NAME, which is what survives an operator widening the
+    allow-list.
+    """
+    from . import taxonomy as tax
+
+    try:
+        policy = load_policy(args.policy)
+    except Exception as exc:  # noqa: BLE001 - any load failure is an invalid policy
+        print(f"INVALID: {exc}", file=sys.stderr)
+        return 2
+
+    if args.update:
+        changed = tax.rewrite_cov_column(policy)
+        print(f"taxonomy Cov column regenerated: {changed} row(s) changed")
+        return 0
+
+    measured = tax.measure(policy)
+    if args.leaks:
+        for threat, verdict in measured:
+            if verdict == tax.LEAK:
+                print(f"{tax.MARK[verdict]}  {threat.category} / {threat.name}: {threat.example}")
+
+    by_category: dict[str, dict[str, int]] = {}
+    for threat, verdict in measured:
+        row = by_category.setdefault(threat.category, {tax.DENY_RULE: 0, tax.DEFAULT_ONLY: 0, tax.LEAK: 0})
+        row[verdict] += 1
+    width = max(len(c) for c in by_category)
+    for category, row in by_category.items():
+        print(f"  {category.ljust(width)}  D={row[tax.DENY_RULE]:<4} "
+              f"~={row[tax.DEFAULT_ONLY]:<4} X={row[tax.LEAK]}")
+
+    counts = tax.summarize(measured)
+    print(f"\n{counts['total']} classes: {counts[tax.DENY_RULE]} deny-rule, "
+          f"{counts[tax.DEFAULT_ONLY]} default-only, {counts[tax.LEAK]} leak")
+    problems = tax.drift(measured)
+    if problems:
+        # A doc that disagrees with the gate is an error in every context, so it always exits
+        # nonzero. A leak is a finding, not an error: the taxonomy names two classes a
+        # path-and-token gate cannot decide, so `--fail-on-leak` is opt-in for CI that wants zero.
+        print(f"DOC DRIFT: {len(problems)} row(s) disagree with live measurement "
+              f"(regenerate with --update)", file=sys.stderr)
+        for p in problems[:10]:
+            print(f"  - {p}", file=sys.stderr)
+        return 2
+    return 1 if (args.fail_on_leak and counts[tax.LEAK]) else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="railward",
@@ -151,7 +202,7 @@ def main(argv: list[str] | None = None) -> int:
     lint.set_defaults(fn=cmd_lint)
 
     attack = sub.add_parser("attack", help="run the adversary and write a signed proof")
-    attack.add_argument("--policy", default="examples/safe.yaml")
+    attack.add_argument("--policy", default="examples/strict.yaml")
     attack.add_argument("--key", default="keys/demo.pem", help="signing key (generated if missing)")
     attack.add_argument("--out", default="proof.json")
     attack.set_defaults(fn=cmd_attack)
@@ -166,6 +217,16 @@ def main(argv: list[str] | None = None) -> int:
     explain.add_argument("--command", help="a shell command to explain")
     explain.add_argument("--action", help='or a full request JSON, e.g. \'{"action":"read","path":"x"}\'')
     explain.set_defaults(fn=cmd_explain)
+
+    coverage = sub.add_parser(
+        "coverage", help="measure a policy against the threat taxonomy (deny-rule / default-only / leak)")
+    coverage.add_argument("--policy", default="examples/strict.yaml")
+    coverage.add_argument("--leaks", action="store_true", help="list every leaking class")
+    coverage.add_argument("--update", action="store_true",
+                          help="regenerate the taxonomy doc's Cov column from live measurement")
+    coverage.add_argument("--fail-on-leak", action="store_true",
+                          help="exit 1 if any class leaks (doc drift always exits 2)")
+    coverage.set_defaults(fn=cmd_coverage)
 
     ctf = sub.add_parser("ctf", help="a game: find an attack that slips through a holed policy")
     ctf.add_argument("--list", action="store_true", help="list the attack names")
