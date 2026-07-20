@@ -14,7 +14,7 @@
 
 ![license](https://img.shields.io/badge/license-MIT-blue)
 ![python](https://img.shields.io/badge/python-3.10%2B-blue)
-![tests](https://img.shields.io/badge/tests-150%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-201%20passing-brightgreen)
 ![proof](https://img.shields.io/badge/proof-117%2F117%20blocked-brightgreen)
 ![mutants](https://img.shields.io/badge/mutants%20killed-6%2F6-brightgreen)
 

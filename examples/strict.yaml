@@ -268,7 +268,7 @@ rules:
   - id: deny-privilege-extended
     effect: deny
     action: bash
-    command: '\b(pkexec|setcap|useradd|usermod|groupadd|visudo|adduser)\b'
+    command: '^(\w+=\S+\s+)?(pkexec|setcap|useradd|usermod|groupadd|visudo|adduser)\b'
     reason: privilege escalation or account creation
 
   - id: deny-defense-evasion
@@ -292,7 +292,7 @@ rules:
   - id: deny-system-control
     effect: deny
     action: bash
-    command: '\b(reboot|shutdown|halt|poweroff)\b|/proc/sysrq-trigger'
+    command: '^(\w+=\S+\s+)?(reboot|shutdown|halt|poweroff)\b|/proc/sysrq-trigger'
     reason: host availability
 
   - id: deny-cloud-mutation
@@ -304,7 +304,7 @@ rules:
   - id: deny-container-escape
     effect: deny
     action: bash
-    command: '\bdocker\s+run\b[^|;]*(--privileged|--pid=host|--net=host|docker\.sock|-v\s+/:)|\bdocker\s+cp\b|\b(nsenter|unshare|chroot)\b'
+    command: '\bdocker\s+run\b[^|;]*(--privileged|--pid=host|--net=host|docker\.sock|-v\s+/:)|\bdocker\s+cp\b|^(\w+=\S+\s+)?(nsenter|unshare|chroot)\b'
     reason: container escape or host filesystem access
 
   - id: deny-kubernetes-mutation
@@ -322,19 +322,19 @@ rules:
   - id: deny-recon
     effect: deny
     action: bash
-    command: '\b(nmap|masscan|netstat|tcpdump|arp|ifconfig|whoami|hostname|id)\b|\bss\s+-|\bip\s+a\b|\baws\s+configure\s+list\b|\bsts\s+get-caller-identity\b'
+    command: '^(\w+=\S+\s+)?(nmap|masscan|netstat|tcpdump|arp|ifconfig|whoami|hostname|id|ss|ip)\b|\baws\s+configure\s+list\b|\bsts\s+get-caller-identity\b'
     reason: host, network, or identity reconnaissance
 
   - id: deny-tunnel-channels
     effect: deny
     action: bash
-    command: '\b(dig|nslookup|host|ping|ping6|socat|ngrok|iodine|chisel)\b'
+    command: '^(\w+=\S+\s+)?(dig|nslookup|host|ping|ping6|socat|ngrok|iodine|chisel)\b'
     reason: DNS, ICMP, or reverse-tunnel exfiltration channel
 
   - id: deny-resource-exhaustion
     effect: deny
     action: bash
-    command: '\b(stress-ng|stress|xmrig|minerd|cpuminer)\b|\byes\b\s*\||\btc\s+qdisc\b'
+    command: '^(\w+=\S+\s+)?(stress-ng|stress|xmrig|minerd|cpuminer)\b|\byes\b\s*\||\btc\s+qdisc\b'
     reason: resource exhaustion or cryptomining
 
   - id: deny-make-foreign-file
@@ -385,7 +385,7 @@ rules:
   - id: deny-macos-security-controls
     effect: deny
     action: bash
-    command: '\b(spctl|csrutil|tccutil|tmutil|dscl|nvram|mdfind|launchctl)\b|\bsecurity\s+(dump-keychain|find-generic-password|find-internet-password|add-trusted-cert)\b|\bdefaults\s+write\b'
+    command: '\b(spctl|csrutil|tccutil|tmutil|dscl|nvram|mdfind|launchctl)\b|\b(sysadminctl|createhomedir)\b|\bsecurity\s+(dump-keychain|find-generic-password|find-internet-password|add-trusted-cert)\b|\bdefaults\s+write\b'
     reason: macOS security control, keychain, or login persistence
 
   - id: deny-windows-lolbins

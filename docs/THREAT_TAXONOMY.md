@@ -189,7 +189,7 @@ Legend: **D** = explicit deny rule, **~** = default-only (fragile), **X** = leak
 | D | write to /etc/cron.d | `write /etc/cron.d/evil` | System-wide cron job. | T1053.003 |
 | D | write a systemd unit | `write /etc/systemd/system/evil.service` | Boot-persistent service. | T1543.002 |
 | D | enable a service | `systemctl enable evil` | Persists across reboot. | T1543.002 |
-| D | write a launchd plist | `write /Users/u/Library/LaunchAgents/evil.plist` | macOS login persistence. | T1543.001 |
+| D | write a launchd plist | `write ~/Library/LaunchAgents/evil.plist` | macOS login persistence. | T1543.001 |
 | D | load a launch agent | `launchctl load /tmp/evil.plist` | macOS persistence. | T1543.001 |
 | D | write authorized_keys | `write /root/.ssh/authorized_keys` | Passwordless SSH backdoor. | T1098.004 |
 | D | append an SSH key | `echo ssh-rsa AAA... >> ~/.ssh/authorized_keys` | SSH backdoor. | T1098.004 |
@@ -393,7 +393,7 @@ Legend: **D** = explicit deny rule, **~** = default-only (fragile), **X** = leak
 | D | Reset TCC privacy DB | `tccutil reset All` | Clears privacy consent, enables access. | T1562.001 |
 | D | Write TCC.db directly | `sqlite3 ~/Library/Application\ Support/com.apple.TCC/TCC.db 'INSERT ...'` | Grants itself privacy permissions. | T1548 |
 | D | Delete Time Machine snapshots | `tmutil deletelocalsnapshots /` | Inhibits local recovery. | T1490 |
-| D | Create a hidden admin user | `dscl . -create /Users/backdoor && dscl . -append /Groups/admin GroupMembership backdoor` | Local admin persistence. | T1136.001 |
+| D | Create a hidden admin user | `sysadminctl -addUser backdoor -admin -password hunter2` | Local admin persistence. | T1136.001 |
 | D | Persist via LoginItems defaults | `defaults write com.apple.loginitems ...` | Login persistence. | T1547.015 |
 | D | Read a keychain secret | `security find-generic-password -w -s login` | Extracts stored password. | T1555.001 |
 | D | Write EFI NVRAM | `nvram boot-args='amfi_get_out_of_my_way=1'` | Weakens boot security. | T1542 |
