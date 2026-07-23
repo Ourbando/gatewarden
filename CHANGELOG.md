@@ -4,7 +4,23 @@ This project treats its own history as an adversary log: each release names the 
 fail-open the gate now closes, and every closure is attested by a test and by the signed proof. The
 number of blocked attacks only goes up.
 
-## 0.3.0
+## 0.4.0
+
+Portability and summary honesty. Both closures were found by running the documented commands the
+way a stranger would, then attacking the proof the way a forger would.
+
+- **`railward attack` and `railward coverage` now work from any directory.** The default policy
+  used to be the relative path `examples/strict.yaml`, so a pip-installed user running the exact
+  command the README gives got a raw `FileNotFoundError` outside the repo checkout. The strict
+  policy now ships inside the package and is the default everywhere; a test pins the packaged
+  copy byte-identical to `examples/strict.yaml` so the two can never drift. A missing input file
+  on any subcommand is now a one-line error and exit 2, not a traceback.
+- **The proof summary is inside the signature (proof version 3).** The top-level counters
+  (`total`, `leaked`, `robustness_total`, `robustness_failed_open`, `head`) used to sit outside
+  the signed material: verification recomputed the truth from the chain, but a reader who quoted
+  the JSON without verifying could be shown edited numbers beside a green signature. Version 3
+  proofs sign the summary itself, and `verify` now cross-checks the summary against the signed
+  records on **every** version, so an edited counter fails closed on old proofs too.
 
 Coverage upgrade. The gate stopped relying on the fail-closed default to catch dangerous classes
 nobody had named, and started naming them. Measured against the 287-class threat taxonomy on

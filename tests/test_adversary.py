@@ -70,7 +70,7 @@ def test_proof_verifies_and_is_deterministic():
     assert p1["head"] == p2["head"]        # same attacks + probes -> same chain
     assert p1["leaked"] == 0
     assert p1["robustness_failed_open"] == 0
-    ok, _ = plog.verify_chain(p1["chain"], p1["sig"], key.public_key())
+    ok, _ = plog.verify_proof(p1, key.public_key())
     assert ok
 
 
@@ -110,5 +110,5 @@ def test_committed_reference_proof_verifies_against_the_published_key():
 
     proof = json.loads(Path("examples/reference_proof.json").read_text(encoding="utf-8"))
     public_key = plog.load_public("examples/pubkey.pem")
-    ok, message = plog.verify_chain(proof["chain"], proof["sig"], public_key)
+    ok, message = plog.verify_proof(proof, public_key)
     assert ok, message

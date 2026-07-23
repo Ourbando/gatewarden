@@ -172,8 +172,8 @@ def build_proof(policy: Policy, private_key) -> dict:
     attacks = run_attacks(policy)
     probes = robustness.run_probes()
     chain = _log.build_chain(attacks + probes)
-    return {
-        "version": 2,
+    proof = {
+        "version": 3,
         "kind": "railward-proof",
         "total": len(attacks),
         "leaked": sum(1 for r in attacks if r["leaked"]),
@@ -181,5 +181,8 @@ def build_proof(policy: Policy, private_key) -> dict:
         "robustness_failed_open": sum(1 for r in probes if r["failed_open"]),
         "head": _log.head_hash(chain),
         "chain": chain,
-        "sig": _log.sign_head(chain, private_key),
     }
+    # Version 3: the signature covers the summary counters as well as the head, so the
+    # numbers a reader quotes are inside the signature, not beside it.
+    proof["sig"] = _log.sign_proof(proof, private_key)
+    return proof

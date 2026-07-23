@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.resources
 import json
 import os
 import sys
@@ -24,6 +25,16 @@ rules:
 """
 
 _MARK = {"allow": "+", "ask": "?", "deny": "x"}
+
+
+def _load_policy_arg(policy_arg: str | None):
+    """No --policy means the strict policy shipped inside the package, so the command works
+    from any directory, installed or checked out."""
+    if policy_arg is None:
+        text = importlib.resources.files("railward").joinpath(
+            "policies/strict.yaml").read_text(encoding="utf-8")
+        return load_policy(text, text=True)
+    return load_policy(policy_arg)
 
 
 def _request_from_args(args: argparse.Namespace) -> dict:
@@ -76,7 +87,7 @@ def cmd_check(args: argparse.Namespace) -> int:
 
 
 def cmd_attack(args: argparse.Namespace) -> int:
-    policy = load_policy(args.policy)
+    policy = _load_policy_arg(args.policy)
     if args.key and os.path.exists(args.key):
         key = plog.load_private(args.key)
     else:
@@ -101,7 +112,7 @@ def cmd_verify(args: argparse.Namespace) -> int:
     with open(args.proof, encoding="utf-8") as fh:
         proof = json.load(fh)
     public_key = plog.load_public(args.pubkey)
-    ok, message = plog.verify_chain(proof["chain"], proof["sig"], public_key)
+    ok, message = plog.verify_proof(proof, public_key)
     if not ok:
         print(f"FAIL: {message}")
         return 2
@@ -144,7 +155,7 @@ def cmd_coverage(args: argparse.Namespace) -> int:
     from . import taxonomy as tax
 
     try:
-        policy = load_policy(args.policy)
+        policy = _load_policy_arg(args.policy)
     except Exception as exc:  # noqa: BLE001 - any load failure is an invalid policy
         print(f"INVALID: {exc}", file=sys.stderr)
         return 2
@@ -202,7 +213,8 @@ def main(argv: list[str] | None = None) -> int:
     lint.set_defaults(fn=cmd_lint)
 
     attack = sub.add_parser("attack", help="run the adversary and write a signed proof")
-    attack.add_argument("--policy", default="examples/strict.yaml")
+    attack.add_argument("--policy", default=None,
+                        help="policy YAML (default: the strict policy shipped in the package)")
     attack.add_argument("--key", default="keys/demo.pem", help="signing key (generated if missing)")
     attack.add_argument("--out", default="proof.json")
     attack.set_defaults(fn=cmd_attack)
@@ -220,7 +232,8 @@ def main(argv: list[str] | None = None) -> int:
 
     coverage = sub.add_parser(
         "coverage", help="measure a policy against the threat taxonomy (deny-rule / default-only / leak)")
-    coverage.add_argument("--policy", default="examples/strict.yaml")
+    coverage.add_argument("--policy", default=None,
+                          help="policy YAML (default: the strict policy shipped in the package)")
     coverage.add_argument("--leaks", action="store_true", help="list every leaking class")
     coverage.add_argument("--update", action="store_true",
                           help="regenerate the taxonomy doc's Cov column from live measurement")
@@ -237,7 +250,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd is None:  # bare `railward`: show usage
         parser.print_help()
         return 0
-    return args.fn(args)
+    try:
+        return args.fn(args)
+    except FileNotFoundError as exc:
+        # A missing input is an operator mistake, not a crash: name it and fail closed.
+        print(f"error: no such file: {exc.filename or exc}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":
